@@ -3,3 +3,9 @@
 /inventory.db
 /Migrations
 /obj
+/linux-64
+/win-64
+/osx-64
+win-64.zip
+osx-64.zip
+linux-64.tar.gz
