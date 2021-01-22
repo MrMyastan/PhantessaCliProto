@@ -19,13 +19,13 @@ namespace PhantessaCliProto
 
 
 
-        static IEnumerable<Record> ListRecords(InventoryContext db, int depth = 0) {
+        static IEnumerable<Record> ListRecords(InventoryContext db, int page) {
             var records = from record in db.Records
                           orderby record.Name, record.RecordId
                           select record;
             
-            Console.WriteLine($"Page {depth + 1}: ");
-            var pageContent = records.Skip(depth * 10).Take(10);
+            Console.WriteLine($"Page {page + 1}: ");
+            var pageContent = records.Skip(page * 10).Take(10);
             int i = 0;
             foreach (Record record in pageContent) {
                 Console.WriteLine($"{i + 1}: {record.Name}\nBy: {record.Artist}\nOn Shelf: {record.Shelf}\n");
@@ -77,8 +77,8 @@ namespace PhantessaCliProto
         {
             using (var db = new InventoryContext())
             {
-                int depth = 0;
-                IEnumerable<Record> currentContent = ListRecords(db);
+                int page = 0;
+                IEnumerable<Record> currentContent = ListRecords(db, page);
 
                 while (true) {
                     Console.Write("Enter a command: ");
@@ -91,8 +91,8 @@ namespace PhantessaCliProto
                     switch (input) {
                         case "help": Console.WriteLine(help); break;
                         case "add": AddRecord(db); break;
-                        case "page": Console.WriteLine($"On page {depth + 1}"); break;
-                        case "list": currentContent = ListRecords(db, depth); break;
+                        case "page": Console.WriteLine($"On page {page + 1}"); break;
+                        case "list": currentContent = ListRecords(db, page); break;
                         case "edit":
                             Console.Write("Enter number of record to edit: ");
                             string recordNumStr = Console.ReadLine();
@@ -107,8 +107,8 @@ namespace PhantessaCliProto
                             }
                             EditRecord(currentContent.ElementAt(recordNum - 1), db);
                             break;
-                        case "next": depth++; currentContent = ListRecords(db, depth); break;
-                        case "back": depth--; currentContent = ListRecords(db, depth); break;
+                        case "next": page++; currentContent = ListRecords(db, page); break;
+                        case "back": page--; currentContent = ListRecords(db, page); break;
                         case "goto": 
                             Console.Write("Enter page number to go to: ");
                             string pageNumStr = Console.ReadLine();
@@ -121,15 +121,17 @@ namespace PhantessaCliProto
                                 Console.WriteLine("Number out of range");
                                 break;
                             }
-                            depth = pageNum - 1;
-                            currentContent = ListRecords(db, depth);
+                            page = pageNum - 1;
+                            currentContent = ListRecords(db, page);
                             break;
                         default: Console.WriteLine("Not a command (maybe you tried adding an arg?)"); break;
                     }
                 }
                 
+                #if DEBUG
                 Console.Write("Press any key to continue...");
                 Console.ReadKey();
+                #endif
             }
         }
     }
