@@ -88,19 +88,25 @@ namespace PhantessaCliProto
             while (true) {
                 Console.Write("Enter a command: ");
                 string input = Console.ReadLine();
+                string[] inputArr = input.Split(' ');
                 
-                if (input == "done") {
+                if (inputArr[0] == "done") {
                     break;
                 }
 
-                switch (input) {
+                switch (inputArr[0]) {
                     case "help": Console.WriteLine(help); break;
                     case "add": AddRecord(); break;
                     case "page": Console.WriteLine($"On page {page + 1}"); break;
                     case "list": currentContent = GetPage(page); ListRecords(page); break;
                     case "edit":
-                        Console.Write("Enter number of record to edit: ");
-                        string recordNumStr = Console.ReadLine();
+                        string recordNumStr;
+                        if (inputArr.Length == 1) {
+                            Console.Write("Enter number of record to edit: ");
+                            recordNumStr = Console.ReadLine();
+                        } else {
+                            recordNumStr = inputArr[1];
+                        }
                         int recordNum;
                         if (!Int32.TryParse(recordNumStr, out recordNum)) {
                             Console.WriteLine("Not a number");
@@ -116,8 +122,13 @@ namespace PhantessaCliProto
                     case "next": page++; currentContent = GetPage(page); ListRecords(page); break;
                     case "back": page--; currentContent = GetPage(page); ListRecords(page); break;
                     case "goto": 
-                        Console.Write("Enter page number to go to: ");
-                        string pageNumStr = Console.ReadLine();
+                        string pageNumStr;
+                        if (inputArr.Length == 1) {
+                            Console.Write("Enter page number to go to: ");
+                            pageNumStr = Console.ReadLine();
+                        } else {
+                            pageNumStr = inputArr[1];
+                        }
                         int pageNum;
                         if (!Int32.TryParse(pageNumStr, out pageNum)) {
                             Console.WriteLine("Not a number");
@@ -131,7 +142,7 @@ namespace PhantessaCliProto
                         currentContent = GetPage(page);
                         ListRecords(page);
                         break;
-                    default: Console.WriteLine("Not a command (maybe you tried adding an arg?)"); break;
+                    default: Console.WriteLine("Not a command (maybe you added an incorrect arg?)"); break;
                 }
             }
             
