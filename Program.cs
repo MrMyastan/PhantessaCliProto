@@ -26,7 +26,7 @@ namespace PhantessaCliProto
                     select record).ToList();
         }
 
-        static void ListRecords(int page) {
+        static void ListPage(int page) {
             var records = GetPage(page);
             Console.WriteLine($"Page {page + 1}: ");
             var pageContent = records.Skip(page * 10).Take(10);
@@ -83,7 +83,7 @@ namespace PhantessaCliProto
         {
             int page = 0;
             List<Record> currentContent = GetPage(page);
-            ListRecords(page);
+            ListPage(page);
 
             while (true) {
                 Console.Write("Enter a command: ");
@@ -98,7 +98,7 @@ namespace PhantessaCliProto
                     case "help": Console.WriteLine(help); break;
                     case "add": AddRecord(); break;
                     case "page": Console.WriteLine($"On page {page + 1}"); break;
-                    case "list": currentContent = GetPage(page); ListRecords(page); break;
+                    case "list": currentContent = GetPage(page); ListPage(page); break;
                     case "edit":
                         string recordNumStr;
                         if (inputArr.Length == 1) {
@@ -119,8 +119,8 @@ namespace PhantessaCliProto
                         EditRecord(currentContent[recordNum - 1]);
                         currentContent = GetPage(page);
                         break;
-                    case "next": page++; currentContent = GetPage(page); ListRecords(page); break;
-                    case "back": page--; currentContent = GetPage(page); ListRecords(page); break;
+                    case "next": page++; currentContent = GetPage(page); ListPage(page); break;
+                    case "back": page--; currentContent = GetPage(page); ListPage(page); break;
                     case "goto": 
                         string pageNumStr;
                         if (inputArr.Length == 1) {
@@ -140,7 +140,7 @@ namespace PhantessaCliProto
                         }
                         page = pageNum - 1;
                         currentContent = GetPage(page);
-                        ListRecords(page);
+                        ListPage(page);
                         break;
                     default: Console.WriteLine("Not a command (maybe you added an incorrect arg?)"); break;
                 }
