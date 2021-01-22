@@ -19,11 +19,15 @@ namespace PhantessaCliProto
 
 
 
-        static IEnumerable<Record> ListRecords(InventoryContext db, int page) {
-            var records = from record in db.Records
-                          orderby record.Name, record.RecordId
-                          select record;
-            
+        static List<Record> GetPage(int page) {
+            using var db = new InventoryContext(); 
+            return (from record in db.Records
+                    orderby record.Name, record.RecordId
+                    select record).ToList();
+        }
+
+        static void ListRecords(int page) {
+            var records = GetPage(page);
             Console.WriteLine($"Page {page + 1}: ");
             var pageContent = records.Skip(page * 10).Take(10);
             int i = 0;
@@ -31,8 +35,6 @@ namespace PhantessaCliProto
                 Console.WriteLine($"{i + 1}: {record.Name}\nBy: {record.Artist}\nOn Shelf: {record.Shelf}\n");
                 i++;
             }
-
-            return pageContent;
         }
         
         static string GetInputWithDefault(string prompt, string ifnone) {
@@ -44,16 +46,20 @@ namespace PhantessaCliProto
             return input;
         }
         
-        static void AddRecord(InventoryContext db) {
+        static void AddRecord() {
             Console.WriteLine("Enter the records info (or enter for 'Unknown')");
             string Name = GetInputWithDefault("Name: ", "Unknown");
             string Artist = GetInputWithDefault("Artist: ", "Unknown");
             string Shelf = GetInputWithDefault("Shelf: ", "Unknown");
-            db.Add(new Record { Name = Name, Artist = Artist, Shelf = Shelf});
-            db.SaveChanges();
+            using (var db = new InventoryContext()) {
+                db.Add(new Record { Name = Name, Artist = Artist, Shelf = Shelf});
+                db.SaveChanges();
+            }
         }
 
-        static void EditRecord(Record record, InventoryContext db) {
+        static void EditRecord(Record record) {
+            using var db = new InventoryContext();
+            db.Update(record);
             while (true) {
                 Console.WriteLine($"Name: {record.Name}\nArtist: {record.Artist}\nShelf: {record.Shelf}\n");
                 Console.Write("Enter the property you would like to edit or done to save and exit editing? ");
@@ -75,64 +81,64 @@ namespace PhantessaCliProto
 
         static void Main(string[] args)
         {
-            using (var db = new InventoryContext())
-            {
-                int page = 0;
-                IEnumerable<Record> currentContent = ListRecords(db, page);
+            int page = 0;
+            List<Record> currentContent = GetPage(page);
+            ListRecords(page);
 
-                while (true) {
-                    Console.Write("Enter a command: ");
-                    string input = Console.ReadLine();
-                    
-                    if (input == "done") {
-                        break;
-                    }
-
-                    switch (input) {
-                        case "help": Console.WriteLine(help); break;
-                        case "add": AddRecord(db); break;
-                        case "page": Console.WriteLine($"On page {page + 1}"); break;
-                        case "list": currentContent = ListRecords(db, page); break;
-                        case "edit":
-                            Console.Write("Enter number of record to edit: ");
-                            string recordNumStr = Console.ReadLine();
-                            int recordNum;
-                            if (!Int32.TryParse(recordNumStr, out recordNum)) {
-                                Console.WriteLine("Not a number");
-                                break;
-                            }
-                            if (recordNum < 0 || recordNum > 9) {
-                                Console.WriteLine("Number out of range");
-                                break;
-                            }
-                            EditRecord(currentContent.ElementAt(recordNum - 1), db);
-                            break;
-                        case "next": page++; currentContent = ListRecords(db, page); break;
-                        case "back": page--; currentContent = ListRecords(db, page); break;
-                        case "goto": 
-                            Console.Write("Enter page number to go to: ");
-                            string pageNumStr = Console.ReadLine();
-                            int pageNum;
-                            if (!Int32.TryParse(pageNumStr, out pageNum)) {
-                                Console.WriteLine("Not a number");
-                                break;
-                            }
-                            if (pageNum < 0) {
-                                Console.WriteLine("Number out of range");
-                                break;
-                            }
-                            page = pageNum - 1;
-                            currentContent = ListRecords(db, page);
-                            break;
-                        default: Console.WriteLine("Not a command (maybe you tried adding an arg?)"); break;
-                    }
-                }
+            while (true) {
+                Console.Write("Enter a command: ");
+                string input = Console.ReadLine();
                 
-                #if DEBUG
-                Console.Write("Press any key to continue...");
-                Console.ReadKey();
-                #endif
+                if (input == "done") {
+                    break;
+                }
+
+                switch (input) {
+                    case "help": Console.WriteLine(help); break;
+                    case "add": AddRecord(); break;
+                    case "page": Console.WriteLine($"On page {page + 1}"); break;
+                    case "list": currentContent = GetPage(page); ListRecords(page); break;
+                    case "edit":
+                        Console.Write("Enter number of record to edit: ");
+                        string recordNumStr = Console.ReadLine();
+                        int recordNum;
+                        if (!Int32.TryParse(recordNumStr, out recordNum)) {
+                            Console.WriteLine("Not a number");
+                            break;
+                        }
+                        if (recordNum < 0 || recordNum > 9) {
+                            Console.WriteLine("Number out of range");
+                            break;
+                        }
+                        EditRecord(currentContent[recordNum - 1]);
+                        currentContent = GetPage(page);
+                        break;
+                    case "next": page++; currentContent = GetPage(page); ListRecords(page); break;
+                    case "back": page--; currentContent = GetPage(page); ListRecords(page); break;
+                    case "goto": 
+                        Console.Write("Enter page number to go to: ");
+                        string pageNumStr = Console.ReadLine();
+                        int pageNum;
+                        if (!Int32.TryParse(pageNumStr, out pageNum)) {
+                            Console.WriteLine("Not a number");
+                            break;
+                        }
+                        if (pageNum < 0) {
+                            Console.WriteLine("Number out of range");
+                            break;
+                        }
+                        page = pageNum - 1;
+                        currentContent = GetPage(page);
+                        ListRecords(page);
+                        break;
+                    default: Console.WriteLine("Not a command (maybe you tried adding an arg?)"); break;
+                }
             }
+            
+            #if DEBUG
+            Console.Write("Press any key to continue...");
+            Console.ReadKey();
+            #endif
         }
     }
 }
